@@ -1,58 +1,78 @@
-# cdevops-jenkins
-k8s lab to install jenkins and use it from github and gitea
+# Jenkins on Kubernetes
 
-TLDR;
+This repository contains Ansible playbooks to deploy and remove Jenkins on a Kubernetes cluster.
 
-```bash
+## Prerequisites
+
+- Docker installed and running
+- Ansible installed
+- Kubernetes cluster running
+
+## Checking Prerequisites
+
+1. Check if Docker is running:
+   ```
+   docker ps
+   ```
+
+2. Check if Ansible is installed:
+   ```
+   ansible-playbook --version
+   ```
+   
+   If not installed, run:
+   ```
+   bash <(curl -Ls https://raw.githubusercontent.com/conestogac-acsit/cdevops-bootstrap/refs/heads/main/bootstrap.sh)
+   ```
+
+3. Check if Kubernetes cluster is running:
+   ```
+   kubectl get ns default
+   ```
+   
+   If not running, install a Kubernetes cluster:
+   ```
+   bash <(curl -Ls https://raw.githubusercontent.com//conestogac-acsit/cdevops-bootstrap/refs/heads/main/k8s.sh)
+   ```
+
+## Deploying Jenkins
+
+To deploy Jenkins on your Kubernetes cluster:
+
+```
 ansible-playbook up.yaml
 ```
 
-You may need some pre-requisites
-
-1. Make sure that docker is running by doing `docker ps` until it shows 
+After deployment, you can access Jenkins through the ngrok ingress. Get the ingress URL with:
 
 ```
-CONTAINER ID   IMAGE                            COMMAND                  CREATED         STATUS         PORTS                             NAMES
-
+kubectl get ingress -n jenkins
 ```
 
-2. run `ansible-playbook --version` to see if you have ansible. If not run:
+## Initial Jenkins Setup
 
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com/conestogac-acsit/cdevops-bootstrap/refs/heads/main/bootstrap.sh)
+1. Get the initial admin password:
+   ```
+   kubectl exec -it $(kubectl get pods -n jenkins -l app=jenkins -o jsonpath='{.items[0].metadata.name}') -n jenkins -- cat /var/jenkins_home/secrets/initialAdminPassword
+   ```
+
+2. Navigate to your Jenkins URL and enter the initial admin password
+3. Install suggested plugins
+4. Create your first admin user
+5. Configure Jenkins URL
+
+## Removing Jenkins
+
+To remove Jenkins from your Kubernetes cluster:
+
+```
+ansible-playbook down.yaml
 ```
 
-3. run `kubectl get ns default` to see if you have a cluster. The expected result is:
+## GitHub and Gitea Integration
 
-```
-NAME      STATUS   AGE
-default   Active   29m
-```
+Follow the tutorial at [Jenkins Python App Tutorial](https://www.jenkins.io/doc/tutorials/build-a-python-app-with-pyinstaller/) to:
 
-If you have another result try installing a k8s cluster:
-
-```bash
-bash <(curl -Ls https://raw.githubusercontent.com//conestogac-acsit/cdevops-bootstrap/refs/heads/main/k8s.sh)
-```
-
-Your job is to edit the up.yaml to add jenkins to your cluster and down.yaml to remove it. You will also need to expose jenkins with the ngrok ingress, as you did with the previous assignment.
-
-### Points to Cover
-
-## Marking
-
-|Item|Out Of|
-|--|--:|
-|use [this article](https://www.digitalocean.com/community/tutorials/how-to-install-jenkins-on-kubernetes) and [this documentation](https://docs.ansible.com/ansible/latest/collections/kubernetes/core/k8s_module.html) to create an up.yaml that installs jenkins on your cluster|2|
-|create a down.yaml that makes the resources created by up.yaml absent. (you will need to reverse the order)|2|
-|Use [this article](https://www.jenkins.io/doc/tutorials/build-a-python-app-with-pyinstaller/) to create a 2nd repository containing a Jenkinsfile|2|
-|push this repository to github and configure github to run the Jenkinsfile through the ngrok ingress|2|
-|push this repository to gitea and configure gitea to run the jenkins file with the cluster ip|2|
-|||
-|total|10|
-
-Submit links to all 3 repositories:
-
-1. this repository with your up.yaml and down.yaml for running jenkins on your cluster.
-2. your github repository with the fork from the article and a Jenkinsfile.
-3. your gitea repository with the fork from the article and a Jenkinsfile, exposed with the ngrok ingress
+1. Create a Python application with a Jenkinsfile
+2. Push to GitHub and configure webhooks
+3. Push to Gitea and configure webhooks
